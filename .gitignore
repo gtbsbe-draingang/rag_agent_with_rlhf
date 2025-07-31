@@ -1,0 +1,18 @@
+# env
+*.env
+app/.env
+
+log
+**/*.log
+
+__*.py
+
+# no Virtual Environment
+**/.venv
+
+# No chainlit
+.chainlit
+.files
+
+# IDE files
+**/.idea
