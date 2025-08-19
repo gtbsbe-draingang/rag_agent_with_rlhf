@@ -12,11 +12,11 @@ from langchain_core.documents import Document
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 
-from agent.core.config import RAGConfig
-from agent.utils.summary_manager import SummaryManager
-from agent.utils.document_processor import DocumentProcessor
-from agent.store.vector_store import VectorStoreManager
-from agent.utils.query_analyzer import QueryAnalyzer
+from app.agent.core.config import RAGConfig
+from app.agent.utils.summary_manager import SummaryManager
+from app.agent.utils.document_processor import DocumentProcessor
+from app.agent.store.vector_store import VectorStoreManager
+from app.agent.utils.query_analyzer import QueryAnalyzer
 from scipy.signal import max_len_seq
 
 logger = logging.getLogger(__name__)
