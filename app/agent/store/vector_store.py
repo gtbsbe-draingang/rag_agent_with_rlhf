@@ -8,7 +8,7 @@ from langchain_community.vectorstores.pgvector import PGVector
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_core.documents import Document
 
-from app.agent.core.config import RAGConfig
+from ..core.config import RAGConfig
 from langchain_core.vectorstores import VectorStore
 from langchain_postgres import PGVectorStore
 
