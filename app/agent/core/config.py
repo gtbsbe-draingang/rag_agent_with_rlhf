@@ -19,15 +19,14 @@ HOME_DIR = os.path.dirname(
 
 class RAGConfig(BaseSettings):
     """Configuration for the RAG agent"""
-
     tavily_api_key: SecretStr = Field(..., description="Tavily API key")
 
     llm_model: str = Field(default="llama3", description="Ollama model name to use (e.g., 'llama3', 'mistral')")
-    ollama_base_url: str = Field(default="http://localhost:11434", description="Base URL for Ollama API")
+    ollama_base_url: SecretStr = Field(..., description="Base URL for Ollama API")
     llm_temperature: float = Field(default=0.1, ge=0.0, description="Temperature of the LLM model")
     embedding_model: SecretStr = Field(..., description="Embedding model to use")
-    embedding_device: str = Field(default="gpu", description="Device to use")
-    reranker_model: str = Field(default="BAAI/bge-reranker-large", description="Reranker model to use")
+    embedding_device: str = Field(default="cpu", description="Device to use")
+    reranker_model: SecretStr = Field(..., description="Reranker model to use")
 
     # Chunking and Retrieval
     chunk_size: int = Field(default=1000, gt=0, description="Size of text chunks")
@@ -52,6 +51,7 @@ class RAGConfig(BaseSettings):
         """Basic configuration for the RAGConfig class"""
         env_file = os.path.join(HOME_DIR, "settings", ".env")
         env_file_encoding = "utf-8"
+        extra = 'ignore'
         case_sensitive = False
         env_prefix = ""
         validate_assignment = True

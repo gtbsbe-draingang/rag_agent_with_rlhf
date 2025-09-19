@@ -1,6 +1,6 @@
 # env
 *.env
-app/.env
+app/agent/core/settings/.env
 
 log
 **/*.log
@@ -16,3 +16,6 @@ __*.py
 
 # IDE files
 **/.idea
+
+# Pycache
+**/__pycache__

@@ -2,17 +2,16 @@
 
 import logging
 from typing import List, Optional
-import os
 
 from langchain_community.vectorstores.pgvector import PGVector
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_core.documents import Document
 
-from ..core.config import RAGConfig
-from langchain_core.vectorstores import VectorStore
-from langchain_postgres import PGVectorStore
+from app.agent.core.config import RAGConfig
+
 
 logger = logging.getLogger(__name__)
+
 
 class VectorStoreManager:
     def __init__(
@@ -142,5 +141,3 @@ class VectorStoreManager:
 if __name__ == '__main__':
     config = RAGConfig()
     store = VectorStoreManager(config)
-
-
