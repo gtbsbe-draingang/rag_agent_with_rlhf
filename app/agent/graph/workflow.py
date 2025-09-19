@@ -8,7 +8,7 @@ from langchain.prompts import ChatPromptTemplate
 from langchain.schema.output_parser import StrOutputParser
 from langgraph.graph.state import CompiledStateGraph
 
-from app.agent.core.state import AgentState
+from ..core.state import AgentState
 
 
 logger = logging.getLogger(__name__)
@@ -204,6 +204,9 @@ async def _retrieve_chunks_node(state: AgentState, agent) -> Dict[str, Any]:
     """Retrieve chunks of documents from FAISS"""
     top_docs = agent.retrieve_chunks(state["search_queries"], state["sources"])
 
+    original_query = state["question"]
+    reranked_docs = agent.rerank_documents(top_docs, original_query)
+
     retries = state.get("retries", 0)
     max_retries = agent.get_max_retries()
     retries = retries if retries < max_retries else 0
@@ -213,18 +216,18 @@ async def _retrieve_chunks_node(state: AgentState, agent) -> Dict[str, Any]:
         {
             "content": docx.page_content[:300] + "...",
             "metadata": docx.metadata,
-            "relevance_score": getattr(docx, 'relevance_score', 0)
+            "relevance_score": docx.metadata.get('relevance_score', 0)
         }
-        for docx in top_docs
+        for docx in reranked_docs
     ]
 
-    logger.info("Chunks has been retrieved.")
+    logger.info("Chunks have been retrieved and reranked.")
 
     return {
-        "retrieved_docs": top_docs,
+        "retrieved_docs": reranked_docs,
         "context": context,
         "retries": retries + 1,
-        "additional_info": f"Found {len(top_docs)} chunks"
+        "additional_info": f"Reranked and selected top {len(reranked_docs)} chunks"
     }
 
 
@@ -434,7 +437,7 @@ def _check_retrieve(state: AgentState, agent) -> str:
 
     if len(docs) > 0:
         return "Done"
-    elif retries < agent.max_retries and len(docs) == 0:
+    elif retries < max_retries and len(docs) == 0:
         return "Repeat"
     else:
         return "Failed"
