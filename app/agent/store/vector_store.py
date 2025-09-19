@@ -141,3 +141,13 @@ class VectorStoreManager:
 if __name__ == '__main__':
     config = RAGConfig()
     store = VectorStoreManager(config)
+
+    # Example
+    docs = [
+        Document(page_content="doc1"),
+        Document(page_content="doc2"),
+        Document(page_content="doc3")
+    ]
+    store.add(docs)
+    print(store.retrieve("doc"))
+    print(store.retrieve_with_score("doc"))
