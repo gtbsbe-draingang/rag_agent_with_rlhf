@@ -5,18 +5,19 @@ from typing import List, Dict, Any, Tuple
 import logging
 
 from langchain.embeddings import HuggingFaceEmbeddings
-from langchain_anthropic import ChatAnthropic
+from langchain_community.chat_models import ChatOllama
 from langchain.memory import ConversationBufferMemory
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_core.documents import Document
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
+from sentence_transformers.cross_encoder import CrossEncoder
 
-from app.agent.core.config import RAGConfig
-from app.agent.utils.summary_manager import SummaryManager
-from app.agent.utils.document_processor import DocumentProcessor
-from app.agent.store.vector_store import VectorStoreManager
-from app.agent.utils.query_analyzer import QueryAnalyzer
+from .config import RAGConfig
+from ..utils.summary_manager import SummaryManager
+from ..utils.document_processor import DocumentProcessor
+from ..store.vector_store import VectorStoreManager
+from ..utils.query_analyzer import QueryAnalyzer
 from scipy.signal import max_len_seq
 
 logger = logging.getLogger(__name__)
@@ -27,12 +28,14 @@ class RAGAgent:
     def __init__(self):
         self.config = RAGConfig()
 
-        self.llm = ChatAnthropic(
-            anthropic_api_key=self.config.anthropic_api_key.get_secret_value(),
-            model_name=self.config.llm_model.get_secret_value(),
+        self.llm = ChatOllama(
+            base_url=self.config.ollama_base_url,
+            model=self.config.llm_model,
             temperature=0.1,
-            max_tokens=256
+            num_predict=256
         )
+
+        self.reranker = CrossEncoder(self.config.reranker_model)
 
         self.web = TavilySearchResults(
             tavily_api_key=self.config.tavily_api_key.get_secret_value(),
@@ -190,6 +193,23 @@ class RAGAgent:
             top_docs.extend(filtered_chunks)
 
         return top_docs
+
+    def rerank_documents(self, documents: List[Document], query: str) -> List[Document]:
+        """Reranks documents based on the original query using a CrossEncoder model."""
+        if not documents:
+            return []
+
+        pairs = [[query, doc.page_content] for doc in documents]
+
+        scores = self.reranker.predict(pairs)
+
+        for doc, score in zip(documents, scores):
+            doc.metadata['relevance_score'] = score
+
+        documents.sort(key=lambda x: x.metadata['relevance_score'], reverse=True)
+
+        logger.info(f"Reranked {len(documents)} documents, returning top {self.config.top_n_reranked}.")
+        return documents[:self.config.top_n_reranked]
 
     def retrieve_web(self, queries: List[str]) -> List[Document]:
         """Retrieve documents from the web using Tavily."""

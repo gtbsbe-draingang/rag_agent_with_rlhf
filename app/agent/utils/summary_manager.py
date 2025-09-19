@@ -6,11 +6,11 @@ import logging
 from pathlib import Path
 from typing import Dict, Any
 
-from langchain_anthropic import ChatAnthropic
+from langchain_community.chat_models import ChatOllama
 from langchain.schema import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-from app.agent.core.config import RAGConfig
+from ..core.config import RAGConfig
 
 logger = logging.getLogger(__name__)
 
@@ -27,9 +27,10 @@ class SummaryManager:
             chunk_size=config.chunk_size * 4,
             chunk_overlap=config.chunk_overlap
         )
-        self.llm = ChatAnthropic(
-            api_key=config.anthropic_api_key.get_secret_value(),
-            model=config.llm_model.get_secret_value(),
+        
+        self.llm = ChatOllama(
+            base_url=config.ollama_base_url,
+            model=config.llm_model,
             temperature=config.llm_temperature
         )
 

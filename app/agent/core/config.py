@@ -20,15 +20,14 @@ HOME_DIR = os.path.dirname(
 class RAGConfig(BaseSettings):
     """Configuration for the RAG agent"""
 
-    # API KEYS
-    anthropic_api_key: SecretStr = Field(..., description="Anthropic API key")
     tavily_api_key: SecretStr = Field(..., description="Tavily API key")
 
-    # LLM Model settings
-    llm_model: SecretStr = Field(..., description="Model name to use")
+    llm_model: str = Field(default="llama3", description="Ollama model name to use (e.g., 'llama3', 'mistral')")
+    ollama_base_url: str = Field(default="http://localhost:11434", description="Base URL for Ollama API")
     llm_temperature: float = Field(default=0.1, ge=0.0, description="Temperature of the LLM model")
     embedding_model: SecretStr = Field(..., description="Embedding model to use")
     embedding_device: str = Field(default="gpu", description="Device to use")
+    reranker_model: str = Field(default="BAAI/bge-reranker-large", description="Reranker model to use")
 
     # Chunking and Retrieval
     chunk_size: int = Field(default=1000, gt=0, description="Size of text chunks")
@@ -36,6 +35,7 @@ class RAGConfig(BaseSettings):
     max_retries: int = Field(default=3, gt=0, description="Maximum number of retries")
     max_retrieval_depth: int = Field(default=2, gt=0, lt=10, description="Maximum retrieval depth")
     top_k_retrieval: int = Field(default=5, gt=0, description="Top K results to retrieve")
+    top_n_reranked: int = Field(default=5, gt=0, description="Top N reranked results to retrieve")
 
     # Compression and Similarity
     compression_enabled: bool = Field(default=True, description="Enable compression")
@@ -65,12 +65,6 @@ class RAGConfig(BaseSettings):
             raise ValueError('chunk_overlap must be less than chunk_size')
         return v
 
-    @field_validator('anthropic_api_key')
-    def validate_api_keys(cls, v):
-        """Ensure API keys are not empty"""
-        if not v or not v.get_secret_value().strip():
-            raise ValueError('API key cannot be empty')
-        return v
 
     @field_validator('embedding_model')
     def validate_embeddings_model(cls, v):
@@ -82,8 +76,8 @@ class RAGConfig(BaseSettings):
     @field_validator('embedding_device')
     def validate_embedding_device(cls, v):
         """Ensure embedding device is correct"""
-        if not v in ['cpu', 'gpu']:
-            raise ValueError('Embeddings device should be either cpu or gpu')
+        if not v in ['cpu', 'cuda']:
+            raise ValueError('Embeddings device should be either cpu or cuda (gpu)')
         return v
 
     @field_validator('vector_store_path')
@@ -116,11 +110,9 @@ class RAGConfig(BaseSettings):
 
         return v
 
-
 def get_config() -> RAGConfig:
     """Alternative factory function for backwards compatibility"""
     return RAGConfig()
-
 
 if __name__ == "__main__":
     # Ensuring working directory
@@ -129,10 +121,3 @@ if __name__ == "__main__":
     # Functionality test
     config = RAGConfig()
     print(config.model_dump_json(indent=2))
-
-    # Or create with explicit values
-    config_explicit = RAGConfig(
-        anthropic_api_key="your-anthropic-key",
-        chunk_size=800,
-        verbose=False
-    )
