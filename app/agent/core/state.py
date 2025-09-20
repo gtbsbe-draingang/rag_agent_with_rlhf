@@ -8,6 +8,8 @@ from typing import List, Dict, Any, TypedDict
 
 from langchain.schema import Document
 
+from app.agent.rl.entry import FeedbackEntry
+
 
 @dataclass
 class AgentState(TypedDict):
@@ -25,4 +27,5 @@ class AgentState(TypedDict):
     retrieval_depth: int
     confidence_score: float
     needs_refinement: bool
-
+    feedback: FeedbackEntry | None
+    is_feedback_valid: bool

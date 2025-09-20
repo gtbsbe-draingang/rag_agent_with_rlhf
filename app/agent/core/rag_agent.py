@@ -19,6 +19,8 @@ from agent.utils.document_processor import DocumentProcessor
 from agent.store.vector_store import VectorStoreManager
 from agent.utils.query_analyzer import QueryAnalyzer
 from scipy.signal import max_len_seq
+from agent.rl.feedback_validator import FeedbackValidator
+from agent.rl.training import RAGReinforcementTrainer
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +29,14 @@ class RAGAgent:
 
     def __init__(self):
         self.config = RAGConfig()
+
+        self.feedback_validator = FeedbackValidator(
+            model_path=os.getenv("FEEDBACK_MODEL_PATH"),
+            vectorizer_path=os.getenv("FEEDBACK_VECTORIZER_PATH")
+        )
+        self.rag_trainer = RAGReinforcementTrainer(
+            model_path=os.getenv("TRAINER_MODEL_PATH"),
+        )
 
         self.llm = ChatOllama(
             base_url=self.config.ollama_base_url.get_secret_value(),

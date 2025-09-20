@@ -54,17 +54,41 @@ def create_rl_workflow(agent) -> CompiledStateGraph:
 
 async def _feedback_handling_node(state: AgentState, agent) -> Dict[str, Any]:
     """Handle user feedback collection and processing"""
+    feedback_entry = state.get("feedback")
+    if not feedback_entry:
+        return {"is_feedback_valid": False}
 
+    # Convert dataclass to dict for the validator
+    feedback_dict = {
+        "answer": feedback_entry.answer,
+        "comment": feedback_entry.comment,
+        "reaction": feedback_entry.rating  # Map rating to reaction
+    }
+
+    is_valid = agent.feedback_validator.is_valid(feedback_dict)
+
+    logger.info(f"Feedback validity check: {'VALID' if is_valid else 'INVALID'}")
+
+    return {"is_feedback_valid": is_valid}
 
 async def _create_art_trajectory_node(state: AgentState, agent) -> Dict[str, Any]:
     """Create ART (Automatic Reward Training) trajectory for RL"""
-    pass
+    feedback_entry = state["feedback"]
+    trainer = agent.rag_trainer
+    trainer.add_feedback(feedback_entry.__dict__)
+
+    logger.info("Created ART Trajectory from valid feedback.")
+    return {}
 
 async def _fine_tune_node(state: AgentState, agent) -> Dict[str, Any]:
-    """Check if sufficient feedback collected for fine-tuning (~30 samples)"""
-    pass
+    trainer = agent.rag_trainer
+    if len(trainer.trajectories) >= 30:
+        logger.info("Sufficient feedback collected. Starting fine-tuning.")
+        trainer.train_on_feedback()
+        trainer.trajectories.clear()
+    return {}
 
 
 def _check_feedback_filtered(state: AgentState) -> bool:
     """Check if we have enough feedback after filtration"""
-    pass
+    return state.get("is_feedback_valid", False)
