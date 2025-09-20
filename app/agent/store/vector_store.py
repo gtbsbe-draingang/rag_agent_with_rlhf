@@ -87,7 +87,6 @@ class VectorStoreManager:
         if self.vectorstore is not None:
             try:
                 # PGVector doesn't have a direct delete collection method
-                # You might need to implement this based on your PostgreSQL setup
                 # For now, we'll clear the vectorstore reference
                 self.vectorstore = None
                 logger.info(f"Collection '{self.collection_name}' reference cleared.")
@@ -140,7 +139,7 @@ class VectorStoreManager:
 
 if __name__ == '__main__':
     config = RAGConfig()
-    store = VectorStoreManager(config)
+    store = VectorStoreManager(config, "test_collection")
 
     # Example
     docs = [
