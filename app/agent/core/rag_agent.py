@@ -137,7 +137,7 @@ class RAGAgent:
         return sorted([f for f in folder.glob("*") if f.suffix.lower() in extensions])
 
     async def init_vectorstores(self, path_to_docs: str) -> None:
-        """Init and add documents to both Summary and Chunks Layers in FAISS."""
+        """Init and add documents to both Summary and Chunks Layers in Vector DB."""
         if (self.summary_vectorstore.exist() and
             self.chunks_vectorstore.exist()):
             self.load_vectorstore()
@@ -150,7 +150,6 @@ class RAGAgent:
         summaries = []
         for docx in RAGAgent._list_documents(path_to_docs):
             # Process documents
-            print(docx)
             langchain_doc = self.document_processor.load_document(docx)
 
             summary = await self.summary_manager.generate_summary(langchain_doc)
@@ -169,7 +168,7 @@ class RAGAgent:
         self.summary_vectorstore.create(summaries)
         self.chunks_vectorstore.create(chunks)
 
-        logger.info(f"Added {len(chunks)} chunks and {len(summaries)} of documents to FAISS")
+        logger.info(f"Added {len(chunks)} chunks and {len(summaries)} of documents to Vector DB")
 
     def load_vectorstore(self) -> None:
         """Load vector store from disk"""
@@ -179,7 +178,7 @@ class RAGAgent:
         logger.info(f"Vector stores loaded")
 
     def retrieve_summary(self, queries: List[str]) -> List[Document]:
-        """Retrieve summary of documents from FAISS"""
+        """Retrieve summary of documents from Vector DB"""
         top_docs = []
         for query in queries:
             try:
@@ -191,7 +190,7 @@ class RAGAgent:
         return top_docs
 
     def retrieve_chunks(self, queries: List[str], sources: List[str]) -> List[Document]:
-        """Retrieve chunks of documents from FAISS"""
+        """Retrieve chunks of documents from Vector DB"""
         top_docs = []
         for query in queries:
             docs = self.chunks_vectorstore.retrieve(query, self.config.top_k_retrieval * len(sources))

@@ -37,15 +37,19 @@ class VectorStoreManager:
             bool: True if vector store collection exists, else False.
         """
         try:
-            # Try to connect and check if collection exists
-            temp_vectorstore = PGVector(
-                connection_string=self.connection_string,
-                embedding_function=self.embedding,
-                collection_name=self.collection_name + suffix,
+            import psycopg2
+
+            conn = psycopg2.connect(self.connection_string.replace("+psycopg2", ""))
+            cur = conn.cursor()
+
+            cur.execute(
+                "SELECT EXISTS (SELECT 1 FROM langchain_pg_collection WHERE name = %s);",
+                (self.collection_name,)
             )
-            # Try to perform a simple operation to check if collection exists
-            temp_vectorstore.similarity_search("test", k=1)
-            return True
+
+            exists = cur.fetchone()[0]
+            return len(exists) > 0
+
         except Exception:
             return False
 
