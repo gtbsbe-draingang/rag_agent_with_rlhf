@@ -29,7 +29,7 @@ class SummaryManager:
         )
         
         self.llm = ChatOllama(
-            base_url=config.ollama_base_url,
+            base_url=config.ollama_base_url.get_secret_value(),
             model=config.llm_model,
             temperature=config.llm_temperature
         )

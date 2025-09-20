@@ -13,11 +13,11 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from sentence_transformers.cross_encoder import CrossEncoder
 
-from .config import RAGConfig
-from ..utils.summary_manager import SummaryManager
-from ..utils.document_processor import DocumentProcessor
-from ..store.vector_store import VectorStoreManager
-from ..utils.query_analyzer import QueryAnalyzer
+from agent.core.config import RAGConfig
+from agent.utils.summary_manager import SummaryManager
+from agent.utils.document_processor import DocumentProcessor
+from agent.store.vector_store import VectorStoreManager
+from agent.utils.query_analyzer import QueryAnalyzer
 from scipy.signal import max_len_seq
 
 logger = logging.getLogger(__name__)
@@ -29,13 +29,22 @@ class RAGAgent:
         self.config = RAGConfig()
 
         self.llm = ChatOllama(
-            base_url=self.config.ollama_base_url,
+            base_url=self.config.ollama_base_url.get_secret_value(),
             model=self.config.llm_model,
             temperature=0.1,
             num_predict=256
         )
 
-        self.reranker = CrossEncoder(self.config.reranker_model.get_secret_value())
+        self.llama = ChatOllama(
+            base_url=self.config.ollama_base_url.get_secret_value(),
+            model=self.config.llama_model,
+            temperature=0.1,
+            num_predict=256
+        )
+
+        self.reranker = CrossEncoder(
+            self.config.reranker_model.get_secret_value()
+        )
 
         self.web = TavilySearchResults(
             tavily_api_key=self.config.tavily_api_key.get_secret_value(),
@@ -235,7 +244,6 @@ class RAGAgent:
 
     def store_messages(self, question: str, answer: str) -> None:
         """Store messages in memory of the agent for chat history."""
-        # Store in memory
         self.memory.chat_memory.add_user_message(question)
         self.memory.chat_memory.add_ai_message(answer)
 

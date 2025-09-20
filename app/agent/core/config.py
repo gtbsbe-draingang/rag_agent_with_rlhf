@@ -21,7 +21,8 @@ class RAGConfig(BaseSettings):
     """Configuration for the RAG agent"""
     tavily_api_key: SecretStr = Field(..., description="Tavily API key")
 
-    llm_model: str = Field(default="llama3", description="Ollama model name to use (e.g., 'llama3', 'mistral')")
+    llm_model: str = Field(default="llama3", description="Ollama model name to use (e.g., 'llama3', 'mistral') instruct only")
+    llama_model: str = Field(default="llama3", description="Ollama model name to use (e.g., 'llama3', 'llama2')")
     ollama_base_url: SecretStr = Field(..., description="Base URL for Ollama API")
     llm_temperature: float = Field(default=0.1, ge=0.0, description="Temperature of the LLM model")
     embedding_model: SecretStr = Field(..., description="Embedding model to use")

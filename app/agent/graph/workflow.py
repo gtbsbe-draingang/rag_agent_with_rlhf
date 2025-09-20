@@ -8,7 +8,7 @@ from langchain.prompts import ChatPromptTemplate
 from langchain.schema.output_parser import StrOutputParser
 from langgraph.graph.state import CompiledStateGraph
 
-from ..core.state import AgentState
+from agent.core.state import AgentState
 
 
 logger = logging.getLogger(__name__)
@@ -103,10 +103,10 @@ def create_workflow(agent) -> CompiledStateGraph:
     )
     workflow.add_conditional_edges(
         "evaluate",
-        lambda state: _should_refine(state),
+        lambda state: state["needs_refinement"],
         {
-            "end": END,
-            "refine": "refine"
+            True: "refine",
+            False: END
         }
     )
     workflow.add_conditional_edges(
@@ -333,26 +333,42 @@ async def _validate_node(state: AgentState, agent) -> Dict[str, Any]:
     
     Return every mistake or hallucination, one per line.
     As a first line write either 'n', if there is no hallucination, or 'y', if there are hallucinations.
+    
+    Rate the answer on a scale of 1-5 for each dimension:
+    1. Relevance: How well does it answer the question?
+    2. Accuracy: Is the information correct?
+    3. Completeness: Does it provide sufficient detail?
+    4. Clarity: Is it clear and well-structured?
+
+    Format your response as:
+    OVERALL_SCORE: [1-5]
+    RELEVANCE: [1-5]
+    ACCURACY: [1-5]
+    COMPLETENESS: [1-5]
+    CLARITY: [1-5]
     """)
 
     # Generate answer
-    chain = prompt | agent.llm | StrOutputParser()
-    answer = await chain.ainvoke({
+    chain = prompt | agent.llama | StrOutputParser()
+    quality_text = await chain.ainvoke({
         "question": question,
         "context": context_text,
         "answer": answer
     })
 
+    scores = _parse_quality_evaluation(quality_text)
+
     logger.info(f"Validation has been done.")
 
-    success = answer[0] == 'n' or state["retries"] == 2
+    average = (sum(scores.values()) - scores['OVERALL_SCORE']) / 4
+    success = max(scores['OVERALL_SCORE'], average) >= 3
     if success:
         additional_info = "My reply passed validation, let's evaluate its comprehensiveness"
     else:
         additional_info = "My reply did not pass validation, retrying..."
 
     return {
-        "validation": answer,
+        "validation": scores,
         "success": success,
         "additional_info": additional_info
     }
@@ -364,10 +380,13 @@ async def _evaluate_node(state: AgentState, agent) -> Dict[str, Any]:
     confidence = state.get("confidence_score", 0.0)
     retrieval_depth = state.get("retrieval_depth", 0)
 
+    scores = state["validation"]
+    average = (sum(scores.values()) - scores['OVERALL_SCORE']) / 4
+    validation = max(scores['OVERALL_SCORE'], average) / 5
+
     # Determine if refinement is needed
-    # Should add fuzzy match instead or any other algorithm
     needs_refinement = (
-            confidence < 0.7 and
+            (confidence + validation) / 2 < 0.7 and
             retrieval_depth < agent.config.max_retrieval_depth - 1 and
             any(phrase in answer.lower() for phrase in [
                 "don't have enough information",
@@ -443,15 +462,37 @@ def _check_retrieve(state: AgentState, agent) -> str:
         return "Failed"
 
 
-def _should_refine(state: AgentState) -> str:
-    """Determine if refinement is needed"""
-    needs_refinement = state.get("needs_refinement", False)
-    return "refine" if needs_refinement else "end"
-
-
 def _should_retry(state: AgentState, agent) -> str:
     """Determine if another loop is needed"""
     search_queries = state["search_queries"]
     retrieval_depth = state["retrieval_depth"]
 
     return "retry" if len(search_queries) > 0 and retrieval_depth < agent.get_max_retrieval_depth() else "end"
+
+
+def _parse_quality_evaluation(quality_text: str) -> Dict[str, int]:
+    """Parse Llama 3 quality evaluation response"""
+    scores = {}
+    for line in quality_text.split('\n'):
+        if ':' in line:
+            key, value = line.split(':', 1)
+            key = key.strip().upper()
+            if key in ['OVERALL_SCORE', 'RELEVANCE', 'ACCURACY', 'COMPLETENESS', 'CLARITY']:
+                try:
+                    # Extract first number from the value
+                    score_str = ''.join(filter(str.isdigit, value.strip()))
+                    if score_str:
+                        scores[key] = int(score_str[0])  # Take first digit
+                    else:
+                        scores[key] = 3  # Default score
+                except (ValueError, IndexError):
+                    scores[key] = 3  # Default score
+
+    # Ensure all required scores are present
+    required_scores = ['OVERALL_SCORE', 'RELEVANCE', 'ACCURACY', 'COMPLETENESS', 'CLARITY']
+    for score_key in required_scores:
+        if score_key not in scores:
+            scores[score_key] = 3
+
+    return scores
+

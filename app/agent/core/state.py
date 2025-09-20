@@ -21,7 +21,7 @@ class AgentState(TypedDict):
     additional_info: str
     sources: List[str]
     retries: int
-    validation: str
+    validation: Dict[str, int]
     retrieval_depth: int
     confidence_score: float
     needs_refinement: bool
