@@ -35,7 +35,7 @@ class RAGAgent:
             num_predict=256
         )
 
-        self.reranker = CrossEncoder(self.config.reranker_model)
+        self.reranker = CrossEncoder(self.config.reranker_model.get_secret_value())
 
         self.web = TavilySearchResults(
             tavily_api_key=self.config.tavily_api_key.get_secret_value(),
@@ -47,8 +47,8 @@ class RAGAgent:
             model_kwargs = {'device': self.config.embedding_device}
         )
 
-        self.summary_vectorstore = VectorStoreManager(self.config, "faiss_summary")
-        self.chunks_vectorstore = VectorStoreManager(self.config, "faiss_chunks")
+        self.summary_vectorstore = VectorStoreManager(self.config, "pg_summary")
+        self.chunks_vectorstore = VectorStoreManager(self.config, "pg_chunks")
 
         self.document_processor = DocumentProcessor(self.config)
         self.summary_manager = SummaryManager(self.config)
