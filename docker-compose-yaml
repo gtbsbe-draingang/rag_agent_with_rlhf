@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: postgres_pgvector
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: rag_agent
+      POSTGRES_PASSWORD: rag_agent_password
+      POSTGRES_DB: rag_vectordb
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/vector_store/init.sql
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d rag_vectordb"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Your Chainlit Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chainlit_app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # Database connection
+      DATABASE_URL: postgresql://rag_agent:rag_agent_password@postgres:5432/rag_vectordb
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: rag_agent
+      POSTGRES_PASSWORD: rag_agent_password
+      POSTGRES_DB: rag_vectordb
+    volumes:
+      # Optional: Mount for development (comment out for production)
+      - ./app:/agent/app
+      # Optional: Mount for logs or persistent data
+      - app_logs:/agent/log
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  postgres_data:
+    driver: local
+  app_logs:
+    driver: local
+
+networks:
+  app_network:
+    driver: bridge
