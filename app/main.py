@@ -4,11 +4,13 @@ import logging
 import os
 import chainlit as cl
 from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
+from mcp.server.fastmcp.prompts.base import UserMessage
 
+from app.agent.rl.entry import FeedbackEntry
 from initialize_memory import init_db
 from agent.store.base import CustomeDataLayer
 from agent.core.rag_agent import RAGAgent
-from agent.graph.workflow import create_workflow
+from agent.graph import create_workflow, create_rl_workflow
 from agent.utils.logging_config import setup_logging
 
 # Logging setup
@@ -18,6 +20,7 @@ logger = logging.getLogger(__name__)
 # Model Setup
 agent = RAGAgent()
 graph = create_workflow(agent)
+rl_graph = create_rl_workflow(agent)
 documents_path = "app/agent/docs"
 
 # Simple History
@@ -91,14 +94,39 @@ async def on_message(msg: cl.Message):
     history.append(AIMessage(content=ans.content))
     cl.user_session.set(HISTORY_KEY, history)
 
-
-# Compatible across versions: no type annotation here
+# (RLHF) REINFORCEMENT LEARNING HUMAN FEEDBACK LOOP
 @cl.on_feedback
 async def on_feedback(feedback):
+    answer = ""
+    history: list[BaseMessage] = cl.user_session.get(HISTORY_KEY, [])
+    for msg in history[::-1]:
+        if isinstance(msg, AIMessage):
+            answer = msg.content
+            break
+
+    value, comment = None, None
     try:
-        print("FEEDBACK:", getattr(feedback, "value", None), getattr(feedback, "comment", None))
-    except Exception:
-        print("FEEDBACK RAW:", feedback)
+        value, comment = getattr(feedback, "value", None), getattr(feedback, "comment", None)
+    except Exception as e:
+        logger.error(f"Incorrect feedback format: {e}")
+
+    if value is not None:
+        try:
+            initial_state = FeedbackEntry(
+                answer=answer,
+                rating=int(value),
+                comment=comment
+            )
+
+            result = None
+            async for state in rl_graph.astream(initial_state):
+                for node_name, node_json in state.items():
+                    if "result" in node_json:
+                        result = node_json["result"]
+            if result:
+                logger.info("Model has been retrained!")
+        except Exception as e:
+            logger.error(f"Problem with RLHF loop: {e}")
 
 # DATA LAYER
 @cl.data_layer

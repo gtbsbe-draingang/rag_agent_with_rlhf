@@ -8,15 +8,15 @@ from langchain.prompts import ChatPromptTemplate
 from langchain.schema.output_parser import StrOutputParser
 from langgraph.graph.state import CompiledStateGraph
 
-from agent.core.state import AgentState
-from app.agent.rl import ARTTrajectory, FeedbackEntry, RAGReinforcementTrainer
+from agent.core.state import FeedbackState
 
 
 logger = logging.getLogger(__name__)
 
+
 def create_rl_workflow(agent) -> CompiledStateGraph:
     """Create the LangGraph workflow"""
-    workflow = StateGraph(AgentState)
+    workflow = StateGraph(FeedbackState)
 
     # Async wrappers for async nodes
     async def feedback_handling_node(state): return await _feedback_handling_node(state, agent)
@@ -34,7 +34,7 @@ def create_rl_workflow(agent) -> CompiledStateGraph:
     # Add edges
     workflow.add_conditional_edges(
         "feedback_handling",
-        lambda state: _check_feedback_filtered(state),
+        lambda state: state.get("is_feedback_valid", False),
         {
             True: "create_art_trajectory",
             False: END,
@@ -50,9 +50,10 @@ def create_rl_workflow(agent) -> CompiledStateGraph:
         "fine_tune",
         END
     )
+    return workflow.compile()
 
 
-async def _feedback_handling_node(state: AgentState, agent) -> Dict[str, Any]:
+async def _feedback_handling_node(state: FeedbackState, agent) -> Dict[str, Any]:
     """Handle user feedback collection and processing"""
     feedback_entry = state.get("feedback")
     if not feedback_entry:
@@ -71,7 +72,7 @@ async def _feedback_handling_node(state: AgentState, agent) -> Dict[str, Any]:
 
     return {"is_feedback_valid": is_valid}
 
-async def _create_art_trajectory_node(state: AgentState, agent) -> Dict[str, Any]:
+async def _create_art_trajectory_node(state: FeedbackState, agent) -> Dict[str, Any]:
     """Create ART (Automatic Reward Training) trajectory for RL"""
     feedback_entry = state["feedback"]
     trainer = agent.rag_trainer
@@ -80,15 +81,12 @@ async def _create_art_trajectory_node(state: AgentState, agent) -> Dict[str, Any
     logger.info("Created ART Trajectory from valid feedback.")
     return {}
 
-async def _fine_tune_node(state: AgentState, agent) -> Dict[str, Any]:
+async def _fine_tune_node(state: FeedbackState, agent) -> Dict[str, Any]:
     trainer = agent.rag_trainer
     if len(trainer.trajectories) >= 30:
         logger.info("Sufficient feedback collected. Starting fine-tuning.")
         trainer.train_on_feedback()
         trainer.trajectories.clear()
-    return {}
-
-
-def _check_feedback_filtered(state: AgentState) -> bool:
-    """Check if we have enough feedback after filtration"""
-    return state.get("is_feedback_valid", False)
+        return {"result": True}
+    logger.info("Still insufficient feedback. Keep collecting.")
+    return {"result": False}

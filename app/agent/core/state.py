@@ -27,5 +27,9 @@ class AgentState(TypedDict):
     retrieval_depth: int
     confidence_score: float
     needs_refinement: bool
+
+@dataclass
+class FeedbackState(TypedDict):
     feedback: FeedbackEntry | None
     is_feedback_valid: bool
+    result: bool
