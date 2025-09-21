@@ -2,7 +2,6 @@
 from nltk.corpus.reader import documentsfrom agent_container.agent.core.rag_agent import RAGAgentfrom agent_container.agent.graph.workflow import create_workflow
 -->
 
-
 # 🧠 RAG Agent using LangGraph & LangChain
 
 This project is a **Retrieval-Augmented Generation (RAG) Agent** with **Reinforcement Learning Loop** built on:
@@ -17,14 +16,26 @@ This project is a **Retrieval-Augmented Generation (RAG) Agent** with **Reinforc
 
 ---
 
+## 🚀 Getting Started
+### 1. Make sure documents are set up
+1. Create folder app/docs
+2. Add all documents you want to use
+
+### 2. Start app
+Start in containers
+   1. Go to _/root_ (having _/root/app_)
+   2. Open console and write: ```docker compose up```
+
+---
+
 ## ✨ Features
 
 - **Agent-centric architecture**: all logic encapsulated in a single `Agent` class
 Note: for modulation purposes, main 'run' function has be depreciated.
 - Basic interface:  
     ```python
-    from agent import RAGAgent
-    from agent import create_workflow
+    from agent.core.rag_agent import RAGAgent
+    from agent.graph import create_workflow
 
     agent = RAGAgent()
     graph = create_workflow(agent)
@@ -49,11 +60,10 @@ Note: for modulation purposes, main 'run' function has be depreciated.
 
 ## 🗂️ Project Structure
 ```graphql
+root/
 ├── app/
 │   ├── log/
 │   │   └──rag_agent.log    # Log file
-│   ├── .dockerignore
-│   ├── docker-compose.yaml     # Docker-compose for RAG agent container
 │   ├── requrements.txt
 │   ├── vector_store    # Vector stores folder. Will be created on initialization
 │   ├── main.py
@@ -81,6 +91,8 @@ Note: for modulation purposes, main 'run' function has be depreciated.
 │                   ├── .env.template   # Helps to locate .env file
 │                   └── .env            # API keys, settings, and constants
 │
+├── .dockerignore
+├── docker-compose.yaml     # Docker-compose for RAG agent container
 ├── .env  # .env for chainlit key and database
 ├── .env.template   # Helps to locate .env file
 ├── requirements.txt    # Main requirements file to setup venv and run code locally
@@ -89,46 +101,6 @@ Note: for modulation purposes, main 'run' function has be depreciated.
 └── README.md
 ```
 
----
-
-## 🚀 Getting Started
-### 1. Install Requirements
-```bash
-pip install -r requirements.txt
-```
-Make sure the following packages are included:
-- ```langchain```
-- ```langgraph```
-- ```pyscopg2```
-- ```huggingface_hub```
-- ```ollama```
-- ```unsloth```
-- ```trl```
-- ```transformers```
-
-Will be in the future version, now we use LangChain module TavilySearch
-- ```tavily-python```
-
-### 2. Set Environment Variables
-1. Paste your variables into .env that can be created in **the same folder and the same format** as _.env.template_
-
-### 3. Set up Chainlit
-1. Go to /app and open the console
-2. Write ```chainlit create-secret```
-3. Copy ```CHAINLIT_AUTH_SECRET=...``` into your upper .env file
-4. Write ```DATABASE_URL=postgresql://<username>:<password>@<host>:<port>/<dbname>``` into your upper .env file
-   
-### 4. Make sure documents are set up
-1. Create folder /docs
-2. Add all documents you want to use
-
-### 5. Start app
-1. If you want to start in containers
-   1. Go to _/app_
-   2. Open console and write: ```docker compose up```
-2. If you want to start it locally:
-   1. Go to _/root_ folder
-   2. Open console and write: ```chainlit run app/app.py```
 ---
 
 ## 🧠 Workflow

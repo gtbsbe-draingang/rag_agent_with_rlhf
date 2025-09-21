@@ -11,7 +11,7 @@ class FeedbackEntry:
     answer: str
     rating: float  # 1-5 scale
     comment: str
-    correct_answer: str
+    correct_answer: str = None
     timestamp: str = None
 
     def __post_init__(self):

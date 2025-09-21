@@ -58,6 +58,7 @@ class FeedbackValidator:
             model = CatBoostClassifier()
             model.load_model(model_path)
             return model
+        # Isolation Forest model
         elif model_path.endswith(".joblib"):
             return joblib.load(model_path)
         else:

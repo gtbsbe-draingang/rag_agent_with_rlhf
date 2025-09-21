@@ -31,11 +31,12 @@ class RAGAgent:
         self.config = RAGConfig()
 
         self.feedback_validator = FeedbackValidator(
-            model_path=os.getenv("FEEDBACK_MODEL_PATH"),
-            vectorizer_path=os.getenv("FEEDBACK_VECTORIZER_PATH")
+            model_path=self.config.feedback_model_path,
+            vectorizer_path=self.config.feedback_vectorizer_path,
         )
+
         self.rag_trainer = RAGReinforcementTrainer(
-            model_path=os.getenv("TRAINER_MODEL_PATH"),
+            model_path=self.config.trainer_model_path,
         )
 
         self.llm = ChatOllama(
