@@ -6,7 +6,7 @@ import chainlit as cl
 from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
 from mcp.server.fastmcp.prompts.base import UserMessage
 
-from app.agent.rl.entry import FeedbackEntry
+from agent.rl.entry import FeedbackEntry
 from initialize_memory import init_db
 from agent.store.base import CustomeDataLayer
 from agent.core.rag_agent import RAGAgent
