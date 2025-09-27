@@ -23,8 +23,10 @@ This project is a **Retrieval-Augmented Generation (RAG) Agent** with **Reinforc
 
 ### 2. Start app
 Start in containers
-   1. Go to _/root_ (having _/root/app_)
-   2. Open console and write: ```docker compose up```
+   1. Go to _/root/base_ (having _/root/app_)
+   2. Open console and write: ```docker build . -t base_docker:latest```
+   3. Go to _/root_ (having _/root/app_)
+   4. Open console and write: ```docker compose up```
 
 ---
 
@@ -61,6 +63,9 @@ Note: for modulation purposes, main 'run' function has be depreciated.
 ## 🗂️ Project Structure
 ```graphql
 root/
+├── base/
+│   ├── Dockerfile          # Docker file to initialize base env
+│   └── requirements.txt    # Required libraries for base env
 ├── app/
 │   ├── log/
 │   │   └──rag_agent.log    # Log file
@@ -92,7 +97,10 @@ root/
 │                   └── .env            # API keys, settings, and constants
 │
 ├── .dockerignore
-├── docker-compose.yaml     # Docker-compose for RAG agent container
+├── Dockerfile     # Docker file for main RAG system
+├── ollama         # Docker file for ollama system
+├── Modelfile      # Modelfile to create a custom model using ollama
+├── docker-compose.yml     # Docker-compose for RAG agent container
 ├── .env  # .env for chainlit key and database
 ├── .env.template   # Helps to locate .env file
 ├── requirements.txt    # Main requirements file to setup venv and run code locally
