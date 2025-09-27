@@ -22,3 +22,4 @@ transformers~=4.55.4
 unsloth~=2025.9.7
 trl~=0.22.2
 catboost~=1.2.8
+ollama

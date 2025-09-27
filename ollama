@@ -1,0 +1,9 @@
+FROM ollama/ollama:latest
+
+# Copy your Modelfile into container
+COPY ./Modelfile /root/Modelfile
+
+# Pre-pull and create the model
+RUN ollama pull llama3.2:3b-instruct-fp16 || true
+RUN ollama create rag_agent -f /root/Modelfile || true
+
