@@ -1,0 +1,9 @@
+{
+  "doc_hash": "a7bc9fd36dbc73e761153960df9f19da",
+  "summary": "This document provides a recipe for making **pancakes** in Russian.  \n\n**Key Concepts:**\n\n* **Pancake Recipe:** The document outlines the steps to make pancakes. \n* **Ingredients:** It lists the necessary ingredients, including flour, milk, eggs, and water.\n* **Instructions:** The instructions are detailed, emphasizing gradual addition of ingredients while mixing.\n\n**Main Arguments:**\n\n* **Consistency is Key:**  The recipe emphasizes achieving a specific consistency for the batter (almost liquid but not too runny). \n* **Precise Measurements:** It uses precise measurements like \"5st\" (likely referring to tablespoons) and \"1/3\" of a cup, indicating a focus on accuracy.\n\n\n**Important Details:**\n\n* **Flour Type:** The document doesn't specify the type of flour used, but it mentions \" муки с горбом\" which translates to \"flour with lumps,\" suggesting a common Russian pancake flour.\n* **Cooking Method:**  The recipe does not mention cooking method (pancakes are typically cooked on a hot griddle or frying pan). \n\n\n**Overall Summary:**\n\nThis document provides a concise and detailed recipe for making pancakes in Russian, emphasizing the importance of precise measurements and consistent batter consistency. It is likely intended for someone familiar with basic cooking techniques and ingredients.",
+  "metadata": {
+    "source": "app\\agent\\docs\\блины.txt"
+  },
+  "original_length": 196,
+  "summary_length": 1304
+}

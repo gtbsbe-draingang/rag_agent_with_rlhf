@@ -46,6 +46,13 @@ services:
     restart: unless-stopped
     ports:
       - "8000:8000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     environment:
       # Database connection
       DATABASE_URL: postgresql://rag_agent:rag_agent_password@postgres:5432/rag_vectordb
